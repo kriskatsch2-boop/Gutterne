@@ -106,8 +106,10 @@
   /* --- Mordleg --- */
   function regelMord() {
     return '<details><summary>Sådan virker mordlegen</summary><ul>' +
-      '<li>Du har ét hemmeligt <b>offer</b>, en <b>ting</b> og et <b>sted</b>.</li>' +
-      '<li>Du dræber ved at få dit offer til at <b>tage imod tingen</b>, mens I begge er på stedet. Sig så stille: <i>"Du er død."</i></li>' +
+      '<li>Du har ét hemmeligt <b>offer</b>, en <b>ting</b> og et <b>sted</b>. Samtidig er der en anden, der jagter dig.</li>' +
+      '<li>Du dræber ved at få dit offer til at <b>tage imod tingen fra din hånd</b>, mens I begge er på stedet. Sig så stille: <i>"Du er død."</i> En ting, offeret selv samler op, tæller ikke.</li>' +
+      '<li><b>Undgå at dø:</b> Du må altid sige nej tak. Vær mistænksom, når nogen rækker dig noget, især hvis det sker et bestemt sted.</li>' +
+      '<li><b>Afslør din jæger:</b> Du har ét forsøg. Gætter du rigtigt, er din jæger ude, og du får drabet. Gætter du forkert, er dit forsøg brugt, og du skal drikke.</li>' +
       '<li>Bliver du dræbt, trykker <b>du selv</b> på "Jeg er blevet dræbt". Så går din seddel automatisk videre til din drabsmand.</li>' +
       '<li><b>Fredszone:</b> ingen drab, mens du selv spiller en Riftbound-kamp.</li>' +
       '<li>Den sidste overlevende vinder.</li></ul></details>';
@@ -124,6 +126,8 @@
       '<div class="lbl">Tingen</div><div class="val">' + esc(s.ting) + '</div><div class="lbl">Stedet</div><div class="val">' + esc(s.sted) + '</div></div></div>';
     h += '<div class="row" style="margin:12px 0"><span class="chip gold">' + m.drab + ' drab</span><span class="chip">' + pub.levende + ' i live</span>' +
       (vis.seddel ? '<button class="btn sm ghost" data-act="skjulseddel" style="margin-left:auto">Skjul</button>' : '') + '</div>';
+    h += '<div class="card"><h3>Ved du, hvem der jagter dig?</h3><p class="muted small" style="margin:0 0 10px">Du har ' + m.forsoegTilbage + ' forsøg tilbage. Gætter du rigtigt, er jægeren ude, og du får drabet. Gætter du forkert, skal du drikke.</p>' +
+      '<button class="btn full" data-act="afsloer"' + (m.forsoegTilbage > 0 ? '' : ' disabled') + '>🔍 Afslør min jæger</button></div>';
     h += '<button class="btn danger full" data-act="doed">☠️ Jeg er blevet dræbt</button><div style="height:12px"></div>' + regelMord();
     return h;
   }
@@ -209,7 +213,7 @@
     }
     if (!pub.mord) h += '<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Mordlegen</h3><span class="chip">' + pub.levende + ' af ' + pub.spillere.length + ' i live</span></div>' +
       '<ul class="list" style="margin-top:6px">' + pub.spillere.map((s) => '<li><span class="' + (s.doed ? 'dead' : '') + '">' + esc(s.navn) + '</span>' + (s.doed ? '☠️' : '<span class="chip ok">I live</span>') + '</li>').join('') + '</ul></div>';
-    h += '<div class="card"><h3>Seneste drab</h3>' + (pub.feed.length ? '<ul class="list feed">' + pub.feed.map((f) => '<li><time>' + kl(f.tid) + '</time><span>☠️ <b>' + esc(f.offer) + '</b> er død' + (f.draeber ? ' <span class="muted">– dræbt af ' + esc(f.draeber) + '</span>' : '') + '</span></li>').join('') + '</ul>' : '<p class="muted" style="margin:0">Ingen drab endnu …</p>') + '</div>';
+    h += '<div class="card"><h3>Seneste drab</h3>' + (pub.feed.length ? '<ul class="list feed">' + pub.feed.map((f) => '<li><time>' + kl(f.tid) + '</time><span>' + (f.type === 'afsloeret' ? '🔍 <b>' + esc(f.offer) + '</b> blev afsløret og er ude' + (f.draeber ? ' <span class="muted">– af ' + esc(f.draeber) + '</span>' : '') : '☠️ <b>' + esc(f.offer) + '</b> er død' + (f.draeber ? ' <span class="muted">– dræbt af ' + esc(f.draeber) + '</span>' : '')) + '</span></li>').join('') + '</ul>' : '<p class="muted" style="margin:0">Ingen drab endnu …</p>') + '</div>';
     if (pub.missionResultat) h += '<div class="card"><h3>Missioner</h3><ul class="list">' + pub.missionResultat.map((p) => '<li><span>' + esc(p.navn) + '</span><span class="chip gold">' + p.point + '</span></li>').join('') + '</ul></div>';
     h += '<div style="text-align:center;margin-top:16px"><button class="link" data-act="logud">Log ud</button> · <button class="link" data-act="admin">Admin</button></div>';
     return h;
@@ -283,6 +287,24 @@
       if (a === 'doed') {
         bekraeft('Er du blevet dræbt?', 'Din seddel går videre til din drabsmand, og det kan kun Kris fortryde.', '☠️ Ja, jeg er død', async () => {
           await api('/api/mord/doed', 'POST', {}); toast('RIP'); await hent();
+        });
+        return;
+      }
+      if (a === 'afsloer') {
+        const levende = pub.spillere.filter((s) => s.id !== mig.id && !s.doed);
+        modal('<h3>Hvem jagter dig?</h3><p class="muted small" style="margin:6px 0 10px">Du har kun ét forsøg, så vælg med omhu.</p><div class="grid-names">' +
+          levende.map((s) => '<button class="btn" data-act="afsloervalg" data-id="' + s.id + '">' + esc(s.navn) + '</button>').join('') +
+          '</div><div class="row"><button class="btn ghost" data-act="lukmodal">Annullér</button></div>');
+        return;
+      }
+      if (a === 'afsloervalg') {
+        const id = +t.dataset.id, n = (pub.spillere.find((s) => s.id === id) || {}).navn;
+        bekraeft('Afslør ' + esc(n) + '?', 'Er du sikker på, at ' + esc(n) + ' jagter dig? Det er dit eneste forsøg.', '🔍 Afslør', async () => {
+          const r = await api('/api/mord/afsloer', 'POST', { mistaenkt: id });
+          await hent();
+          modal(r.rigtigt
+            ? '<div style="text-align:center"><div style="font-size:44px">🎯</div><h3>Rigtigt!</h3><p class="muted">' + esc(r.navn) + ' jagtede dig og er nu ude. Du får drabet.</p></div><div class="row"><button class="btn pri" data-act="lukmodal">Fedt</button></div>'
+            : '<div style="text-align:center"><div style="font-size:44px">🍺</div><h3>Forkert!</h3><p class="muted">' + esc(r.navn) + ' jagter dig ikke. Dit forsøg er brugt, så du skal drikke.</p></div><div class="row"><button class="btn pri" data-act="lukmodal">Skål</button></div>');
         });
         return;
       }
