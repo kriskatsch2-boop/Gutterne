@@ -78,6 +78,12 @@ const bland = (arr) => {
 const hashPin = (pin, salt) => crypto.scryptSync(String(pin), salt, 32).toString('hex');
 const navn = (id) => (tilstand.spillere[id] ? tilstand.spillere[id].navn : '?');
 const nytToken = () => crypto.randomBytes(24).toString('hex');
+// Missionstekst med navnet indsat (navnet slås op ved visning, så omdøbning virker)
+const genitiv = (n) => (/[sxz]$/i.test(n) ? n + "'" : n + 's');   // Jonas' / Mads' / Emils
+const missionTekst = (m) => {
+  const n = m.personId === null || m.personId === undefined ? 'en anden' : navn(m.personId);
+  return m.tekst.replace(/\{persons\}/g, genitiv(n)).replace(/\{person\}/g, n);
+};
 
 function spillerFraReq(req) {
   const t = req.get('x-token');
@@ -115,7 +121,12 @@ function traek() {
   const pulje = bland(data.missioner);
   tilstand.missioner = {};
   ids.forEach((id, i) => {
-    tilstand.missioner[id] = pulje.slice(i * 3, i * 3 + 3).map((tekst) => ({ tekst, status: 'aktiv', afsloeretAf: null }));
+    const andre = ids.filter((x) => x !== id);
+    tilstand.missioner[id] = pulje.slice(i * 3, i * 3 + 3).map((tekst) => ({
+      tekst,
+      personId: tekst.includes('{person') ? andre[crypto.randomInt(andre.length)] : null,
+      status: 'aktiv', afsloeretAf: null,
+    }));
   });
   tilstand.trukket = true;
 }
@@ -132,7 +143,7 @@ function missionResultat() {
     return {
       id: s.id, navn: s.navn, klaret, afsloeringer: afsl[s.id] || 0,
       point: klaret + (afsl[s.id] || 0),
-      missioner: liste.map((m) => ({ tekst: m.tekst, status: m.status, afsloeretAf: m.afsloeretAf === null ? null : navn(m.afsloeretAf) })),
+      missioner: liste.map((m) => ({ tekst: missionTekst(m), status: m.status, afsloeretAf: m.afsloeretAf === null ? null : navn(m.afsloeretAf) })),
     };
   }).sort((a, b) => b.point - a.point);
 }
@@ -239,7 +250,7 @@ app.get('/api/mig', kraevSpiller, (req, res) => {
       drab: m.drab[id] || 0,
       seddel: seddel && !m.doed[id] ? { offer: navn(seddel.offer), ting: seddel.ting, sted: seddel.sted } : null,
     },
-    missioner: (tilstand.missioner[id] || []).map((x) => ({ tekst: x.tekst, status: x.status, afsloeretAf: x.afsloeretAf })),
+    missioner: (tilstand.missioner[id] || []).map((x) => ({ tekst: missionTekst(x), status: x.status, afsloeretAf: x.afsloeretAf })),
     oel: tilstand.oel[id] || { mitNr: null, vurderinger: {} },
   });
 });
