@@ -21,7 +21,7 @@ function nyTilstand(navne) {
     tokens: {},          // token -> spiller-id
     adminTokens: [],
     trukket: false,
-    mord: { sedler: {}, doed: {}, drab: {}, log: [], vinder: null },
+    mord: { sedler: {}, doed: {}, drab: {}, log: [], vinder: null, forsoeg: {} },
     mordHistorik: [],    // til "fortryd sidste drab"
     missioner: {},       // id -> [{ tekst, status, afsloeretAf }]
     oel: {},             // id -> { mitNr, vurderinger: { nr: { point, gaet } } }
@@ -115,7 +115,7 @@ function traek() {
       sted: stedListe[i % stedListe.length],
     };
   });
-  tilstand.mord = { sedler, doed: {}, drab: {}, log: [], vinder: null };
+  tilstand.mord = { sedler, doed: {}, drab: {}, log: [], vinder: null, forsoeg: {} };
   tilstand.mordHistorik = [];
 
   const pulje = bland(data.missioner);
@@ -186,7 +186,7 @@ function mordResultat() {
     vinder: m.vinder === null ? null : navn(m.vinder),
     drab: tilstand.spillere.map((s) => ({ navn: s.navn, drab: m.drab[s.id] || 0, doed: !!m.doed[s.id] }))
       .sort((a, b) => b.drab - a.drab),
-    log: m.log.map((l) => ({ tid: l.tid, draeber: navn(l.draeber), offer: navn(l.offer) })),
+    log: m.log.map((l) => ({ tid: l.tid, draeber: navn(l.draeber), offer: navn(l.offer), type: l.type || 'drab' })),
   };
 }
 
@@ -208,7 +208,7 @@ app.get('/api/offentlig', (req, res) => {
     faser: tilstand.faser,
     antalOel: tilstand.antalOel,
     levende,
-    feed: m.log.slice().reverse().map((l) => ({ tid: l.tid, offer: navn(l.offer), draeber: mordSlut ? navn(l.draeber) : null })),
+    feed: m.log.slice().reverse().map((l) => ({ tid: l.tid, offer: navn(l.offer), type: l.type || 'drab', draeber: mordSlut ? navn(l.draeber) : null })),
     mord: mordSlut ? mordResultat() : null,
     missionResultat: tilstand.faser.missionerAfsloeret ? missionResultat() : null,
     oelResultat: tilstand.faser.oelAfsloeret ? oelResultat() : null,
@@ -248,6 +248,7 @@ app.get('/api/mig', kraevSpiller, (req, res) => {
       doed: !!m.doed[id],
       vinder: m.vinder === id,
       drab: m.drab[id] || 0,
+      forsoegTilbage: Math.max(0, AFSLOERINGS_FORSOEG - ((m.forsoeg || {})[id] || 0)),
       seddel: seddel && !m.doed[id] ? { offer: navn(seddel.offer), ting: seddel.ting, sted: seddel.sted } : null,
     },
     missioner: (tilstand.missioner[id] || []).map((x) => ({ tekst: missionTekst(x), status: x.status, afsloeretAf: x.afsloeretAf })),
@@ -256,23 +257,61 @@ app.get('/api/mig', kraevSpiller, (req, res) => {
 });
 
 // Jeg er blevet dræbt – offeret trykker selv, og sedlen går videre til drabsmanden
-app.post('/api/mord/doed', kraevSpiller, (req, res) => {
-  const offer = req.spillerId;
+// Fælles: 'offer' er ude. Den, der jagtede offeret, arver sedlen. 'kredit' får drabet.
+function slaaUd(offer, kredit, type) {
   const m = tilstand.mord;
-  if (!tilstand.trukket) return res.status(400).json({ fejl: 'Legen er ikke startet' });
-  if (m.doed[offer]) return res.status(400).json({ fejl: 'Du er allerede død' });
-  if (m.vinder !== null) return res.status(400).json({ fejl: 'Mordlegen er slut' });
-  const draeber = Object.keys(m.sedler).map(Number).find((k) => !m.doed[k] && m.sedler[k] && m.sedler[k].offer === offer);
-  if (draeber === undefined) return res.status(400).json({ fejl: 'Fandt ingen drabsmand' });
+  const arving = Object.keys(m.sedler).map(Number).find((k) => !m.doed[k] && m.sedler[k] && m.sedler[k].offer === offer);
+  if (arving === undefined) return false;
   tilstand.mordHistorik.push(JSON.stringify(m));
-  m.sedler[draeber] = m.sedler[offer];
+  m.sedler[arving] = m.sedler[offer];
   m.sedler[offer] = null;
   m.doed[offer] = true;
-  m.drab[draeber] = (m.drab[draeber] || 0) + 1;
-  m.log.push({ tid: Date.now(), draeber, offer });
-  if (m.sedler[draeber] && m.sedler[draeber].offer === draeber) { m.vinder = draeber; m.sedler[draeber] = null; }
+  m.drab[kredit] = (m.drab[kredit] || 0) + 1;
+  m.log.push({ tid: Date.now(), draeber: kredit, offer, type });
+  if (m.sedler[arving] && m.sedler[arving].offer === arving) { m.vinder = arving; m.sedler[arving] = null; }
+  return true;
+}
+function mordAktiv(id, res) {
+  const m = tilstand.mord;
+  if (!tilstand.trukket) { res.status(400).json({ fejl: 'Legen er ikke startet' }); return false; }
+  if (m.vinder !== null) { res.status(400).json({ fejl: 'Mordlegen er slut' }); return false; }
+  if (m.doed[id]) { res.status(400).json({ fejl: 'Du er allerede død' }); return false; }
+  return true;
+}
+
+// Jeg er blevet dræbt – offeret trykker selv, og sedlen går videre til drabsmanden
+app.post('/api/mord/doed', kraevSpiller, (req, res) => {
+  const offer = req.spillerId;
+  if (!mordAktiv(offer, res)) return;
+  const m = tilstand.mord;
+  const draeber = Object.keys(m.sedler).map(Number).find((k) => !m.doed[k] && m.sedler[k] && m.sedler[k].offer === offer);
+  if (draeber === undefined) return res.status(400).json({ fejl: 'Fandt ingen drabsmand' });
+  slaaUd(offer, draeber, 'drab');
   gem();
   res.json({ ok: true });
+});
+
+// Afslør din jæger: ét forsøg pr. spiller. Rigtigt = jægeren er ude, og du får drabet.
+const AFSLOERINGS_FORSOEG = 1;
+app.post('/api/mord/afsloer', kraevSpiller, (req, res) => {
+  const id = req.spillerId;
+  if (!mordAktiv(id, res)) return;
+  const m = tilstand.mord;
+  m.forsoeg = m.forsoeg || {};
+  if ((m.forsoeg[id] || 0) >= AFSLOERINGS_FORSOEG) return res.status(400).json({ fejl: 'Du har brugt dit forsøg' });
+  const mistaenkt = Number((req.body || {}).mistaenkt);
+  if (!tilstand.spillere[mistaenkt] || mistaenkt === id || m.doed[mistaenkt]) return res.status(400).json({ fejl: 'Vælg en spiller, der er i live' });
+  const jaeger = Object.keys(m.sedler).map(Number).find((k) => !m.doed[k] && m.sedler[k] && m.sedler[k].offer === id);
+  if (mistaenkt === jaeger) {
+    slaaUd(jaeger, id, 'afsloeret');
+    m.forsoeg[id] = (m.forsoeg[id] || 0) + 1;
+    gem();
+    return res.json({ rigtigt: true, navn: navn(jaeger) });
+  }
+  tilstand.mordHistorik.push(JSON.stringify(m));
+  m.forsoeg[id] = (m.forsoeg[id] || 0) + 1;
+  gem();
+  res.json({ rigtigt: false, navn: navn(mistaenkt) });
 });
 
 // Opdater en mission: aktiv / klaret / braendt (+ hvem der afslørede den)

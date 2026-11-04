@@ -51,7 +51,8 @@ Uden `DATABASE_URL` gemmes alt i `gemt-tilstand.json` i mappen.
 4. Admin → **Træk sedler og missioner**. Alt trækkes tilfældigt på serveren, så du kan heller ikke se de andres.
 
 **I løbet af dagen**
-- Mordlegen: Offeret trykker selv på **"Jeg er blevet dræbt"**, og så går sedlen automatisk videre. Trykker nogen ved en fejl, kan du bruge **Fortryd sidste drab** under Admin.
+- Mordlegen: Man dræber ved at få offeret til at tage imod tingen fra hånd til hånd på stedet. Man undgår at dø ved at sige nej tak. Har man en mistanke, kan man bruge sit ene forsøg på **"Afslør min jæger"**. Gætter man rigtigt, er jægeren ude, og man får drabet. Gætter man forkert, skal man drikke.
+- Offeret trykker selv på **"Jeg er blevet dræbt"**, og så går sedlen automatisk videre. Trykker nogen ved en fejl, kan du bruge **Fortryd sidste drab** under Admin.
 - Missioner: Man markerer selv **Klaret** eller **Afsløret** (og vælger, hvem der afslørede den).
 
 **Til aftensmaden**
