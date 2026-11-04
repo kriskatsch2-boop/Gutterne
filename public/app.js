@@ -134,7 +134,8 @@
       '<li>Du har <b>3 hemmelige missioner</b>, som skal klares, uden at nogen opdager det.</li>' +
       '<li>Klarer du en, så tryk <b>"Klaret"</b>. Det kan kun du se.</li>' +
       '<li>Mistænker du nogen, kan du råbe <b>"Mission!"</b> og gætte, hvad den var. Gætter du rigtigt, trykker den anden <b>"Afsløret"</b> og vælger dig, og du får 1 point. Gætter du forkert, skal du drikke.</li>' +
-      '<li>Missionerne afsløres i baren. En klaret mission giver 1 point, og en afsløring hos en anden giver 1 point.</li></ul></details>';
+      '<li>Missionerne afsløres i baren. En klaret mission giver 1 point, og en afsløring hos en anden giver 1 point.</li>' +
+      '<li><b>Stop-reglen:</b> Siger nogen stop til en fysisk mission, så stopper du. Missionen er bare brændt.</li></ul></details>';
   }
   function vMissioner() {
     let h = '<h2>Hemmelige missioner</h2>';
