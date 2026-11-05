@@ -29,7 +29,7 @@ const steder = [
   'ved badeværelsesdøren',
   'i soveværelset',
   'i ekstraværelset (Riftbound-rummet) – når ingen af jer spiller',
-  'i baren',
+  'ved beer pong-bordet',
 ];
 
 // Hemmelige missioner – hver spiller trækker 3.
@@ -54,7 +54,7 @@ const missioner = [
   'Overbevis nogen om, at Riot har annonceret en ny champion, der hedder "Bordskåneren"',
   'Sig "Baron er oppe!", når nogen åbner køleskabet – 3 gange',
   'Sæt en Worlds-sang på højttaleren, og få mindst én til at nynne eller synge med',
-  'Kald aftensmaden "farm", og klag højt over, at {person} tager dit CS',
+  'Kald snacksene "farm", og klag højt over, at {person} tager dit CS',
   'Få {person} til at hente en øl til dig, mens du kalder den "blue buff"',
   'Sig "inting" om noget, nogen gør i køkkenet – 3 gange',
   'Få {person} til at nævne sin main, og sig "selvfølgelig" med et suk',

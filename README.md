@@ -46,20 +46,21 @@ Uden `DATABASE_URL` gemmes alt i `gemt-tilstand.json` i mappen.
 1. Åbn siden → **Admin** (nederst) → log ind med `ADMIN_PIN`.
 2. Skriv de 7 navne → **Gem navne**.
 
-**Kl. 13 når alle er der**
-3. Del linket. Alle trykker på deres navn og vælger selv en kode på 4 cifre.
+**Når folk kommer**
+3. Øllene ryger i den fælles pose. Del linket. Alle trykker på deres navn og vælger selv en kode på 4 cifre.
 4. Admin → **Træk sedler og missioner**. Alt trækkes tilfældigt på serveren, så du kan heller ikke se de andres.
 
 **I løbet af dagen**
+- Primær mission: For hvert point i dagens lege giver man en tår til en valgfri person (vises øverst under Missioner og Status).
 - Mordlegen: Man dræber ved at få offeret til at tage imod tingen fra hånd til hånd på stedet. Man undgår at dø ved at sige nej tak. Har man en mistanke, kan man bruge sit ene forsøg på **"Afslør min jæger"**. Gætter man rigtigt, er jægeren ude, og man får drabet. Gætter man forkert, skal man drikke.
 - Offeret trykker selv på **"Jeg er blevet dræbt"**, og så går sedlen automatisk videre. Trykker nogen ved en fejl, kan du bruge **Fortryd sidste drab** under Admin.
 - Missioner: Man markerer selv **Klaret** eller **Afsløret** (og vælger, hvem der afslørede den).
 
-**Til aftensmaden**
+**Mystery-øl (når I har lyst)**
 - Admin → slå **Åbn øl-smagning** til. Alle skriver deres egen øls nummer og giver point (1–10) og gætter ejer på resten.
 - Når alle står som færdige: slå **Afslør øl-resultat** til.
 
-**I baren**
+**Til sidst**
 - Slå **Afslør missioner** og **Afslør mordlegen** til. Så kan alle se point, missioner og hvem der dræbte hvem under *Status*.
 
 **Hvis noget går galt**
