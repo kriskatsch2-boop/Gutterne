@@ -103,6 +103,17 @@
       '<p class="muted small" style="text-align:center;margin-top:16px">Har du glemt din kode? Bed Kris om at nulstille den.</p></div>';
   }
 
+  /* --- Primær mission (gælder alle, hele dagen) --- */
+  function vPrimaer() {
+    return '<div class="card" style="border-color:var(--gold)"><h3 style="color:var(--gold2)">🍺 Primær mission – gælder alle</h3>' +
+      '<p style="margin:0 0 8px">For hvert point, du får i dagens lege, giver du <b>en tår til en valgfri person</b>.</p>' +
+      '<ul class="small" style="margin:0;padding-left:18px">' +
+      '<li><b>Riftbound:</b> hvert turneringspoint, dvs. 3 for en sejr og 1 for uafgjort</li>' +
+      '<li><b>Mordlegen:</b> 1 for hvert drab og 1 hvis du afslører din jæger</li>' +
+      '<li><b>Hemmelige missioner:</b> 1 for hver klaret mission og hver afsløring. De uddeles, når missionerne afsløres.</li>' +
+      '<li><b>Mystery-øl:</b> 1 for hvert rigtigt gæt</li></ul></div>';
+  }
+
   /* --- Mordleg --- */
   function regelMord() {
     return '<details><summary>Sådan virker mordlegen</summary><ul>' +
@@ -112,6 +123,7 @@
       '<li><b>Afslør din jæger:</b> Du har ét forsøg. Gætter du rigtigt, er din jæger ude, og du får drabet. Gætter du forkert, er dit forsøg brugt, og du skal drikke.</li>' +
       '<li>Bliver du dræbt, trykker <b>du selv</b> på "Jeg er blevet dræbt". Så går din seddel automatisk videre til din drabsmand.</li>' +
       '<li><b>Fredszone:</b> ingen drab, mens du selv spiller en Riftbound-kamp.</li>' +
+      '<li>Hvert drab giver dig 1 tår at dele ud (primær mission).</li>' +
       '<li>Den sidste overlevende vinder.</li></ul></details>';
   }
   function vMord() {
@@ -138,11 +150,11 @@
       '<li>Du har <b>3 hemmelige missioner</b>, som skal klares, uden at nogen opdager det.</li>' +
       '<li>Klarer du en, så tryk <b>"Klaret"</b>. Det kan kun du se.</li>' +
       '<li>Mistænker du nogen, kan du råbe <b>"Mission!"</b> og gætte, hvad den var. Gætter du rigtigt, trykker den anden <b>"Afsløret"</b> og vælger dig, og du får 1 point. Gætter du forkert, skal du drikke.</li>' +
-      '<li>Missionerne afsløres i baren. En klaret mission giver 1 point, og en afsløring hos en anden giver 1 point.</li>' +
+      '<li>Missionerne afsløres til sidst, når Kris slår det til. En klaret mission giver 1 point, og en afsløring hos en anden giver 1 point.</li>' +
       '<li><b>Stop-reglen:</b> Siger nogen stop til en fysisk mission, så stopper du. Missionen er bare brændt.</li></ul></details>';
   }
   function vMissioner() {
-    let h = '<h2>Hemmelige missioner</h2>';
+    let h = '<h2>Hemmelige missioner</h2>' + vPrimaer();
     if (pub.missionResultat) return h + vMissionResultat() + regelMission();
     if (!mig.trukket) return h + '<div class="card"><p style="margin:0">Missionerne er ikke trukket endnu.</p></div>' + regelMission();
     if (!vis.missioner) return h + '<div class="secret" style="min-height:160px"><div class="cover" data-act="vismissioner"><span style="font-size:30px">🕵️</span>Tryk for at se dine 3 missioner<span class="muted small" style="font-weight:500">Sørg for, at ingen kigger med</span></div></div><div style="height:12px"></div>' + regelMission();
@@ -172,8 +184,8 @@
     let h = '<h2>Mystery-øl</h2>';
     if (pub.oelResultat) return h + vOelResultat();
     if (!pub.faser.oelAaben) {
-      return h + '<div class="card"><p style="margin-top:0"><b>Husk:</b> Tag en øl med (mindst 33 cl), som du tror, de andre ikke kender. Pak den ind hjemmefra i sølvpapir eller en brun pose uden navn.</p>' +
-        '<p class="muted" style="margin-bottom:0">Smagningen åbner til aftensmaden. Øllene bliver blandet og nummereret, og så giver alle point og gætter, hvem der har taget hvilken med.</p></div>';
+      return h + '<div class="card"><p style="margin-top:0"><b>Husk:</b> Tag en øl med (mindst 33 cl), som du tror, de andre ikke kender. Læg den i den fælles pose, når du kommer, uden at de andre ser hvilken.</p>' +
+        '<p class="muted" style="margin-bottom:0">Smagningen åbner, når Kris starter den. Øllene bliver blandet og nummereret, og så giver alle point og gætter, hvem der har taget hvilken med.</p></div>';
     }
     const n = pub.antalOel, k = oelKladde, andre = pub.spillere.filter((s) => s.id !== mig.id);
     h += '<div class="card"><label class="muted small" for="mitnr">Hvilket nummer er din øl? (kun du kan se det)</label><select id="mitnr" data-oel="mitnr" style="width:100%;margin-top:6px"><option value="">Vælg nummer</option>' +
@@ -205,7 +217,7 @@
 
   /* --- Status --- */
   function vStatus() {
-    let h = '<h2>Status</h2>';
+    let h = '<h2>Status</h2>' + vPrimaer();
     if (pub.mord) {
       const m = pub.mord;
       if (m.vinder) h += '<div class="winner"><div class="t">MORDLEGENS VINDER</div><div class="n">' + esc(m.vinder) + '</div></div>';
